@@ -26,8 +26,11 @@ rm talib-python.zip
 # Build TA-Lib C library
 echo "Building TA-Lib C library..."
 cd ta-lib-${TALIB_C_VER}
+
+# Create include/ta-lib directory and copy the contents of include to it
 mkdir -p include/ta-lib
-cp -r include/* include/ta-lib/
+# Use find to copy only files, not directories
+find include -type f -exec cp -t include/ta-lib {} +
 
 mkdir _build
 cd _build
