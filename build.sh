@@ -38,11 +38,18 @@ cd _build
 cmake -DCMAKE_BUILD_TYPE=Release ..
 make -j$(nproc)
 
-# Copy the library to a standard location
-sudo cp ta_lib.* /usr/local/lib/
-sudo cp -r ../include/ta-lib /usr/local/include/
+# Check if library files are generated
+LIB_FILES=$(find . -name "libta_lib*")
+if [ -z "$LIB_FILES" ]; then
+  echo "Error: No library files found."
+  exit 1
+fi
 
-cd ../..
+# Copy the library to a standard location
+sudo cp $LIB_FILES /usr/local/lib/
+sudo cp -r ../../include/ta-lib /usr/local/include/
+
+cd ../../..
 
 # Build TA-Lib Python binding
 echo "Building TA-Lib Python binding..."
