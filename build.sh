@@ -1,44 +1,55 @@
 #!/bin/bash
 
-# Download and build TA-Lib
+# Stop on any error
 set -e
 
-# set TALIB_C_VER=0.6.2
-# set TALIB_PY_VER=0.6.0
+# Set versions
+TALIB_C_VER=0.6.2
+TALIB_PY_VER=0.6.0
 
-CMAKE_GENERATOR="Unix Makefiles"
-CMAKE_BUILD_TYPE="Release"
-CMAKE_CONFIGURATION_TYPES="Release"
+# Create a directory for the build
+mkdir -p build
+cd build
 
+# Download TA-Lib C library
+echo "Downloading TA-Lib C library..."
 curl -L -o talib-c.zip https://github.com/TA-Lib/ta-lib/archive/refs/tags/v${TALIB_C_VER}.zip
-if [ $? -ne 0 ]; then exit 1; fi
-
-curl -L -o talib-python.zip https://github.com/TA-Lib/ta-lib-python/archive/refs/tags/TA_Lib-${TALIB_PY_VER}.zip
-if [ $? -ne 0 ]; then exit 1; fi
-
 unzip talib-c.zip
-if [ $? -ne 0 ]; then exit 1; fi
+rm talib-c.zip
 
+# Download TA-Lib Python binding
+echo "Downloading TA-Lib Python binding..."
+curl -L -o talib-python.zip https://github.com/TA-Lib/ta-lib-python/archive/refs/tags/TA_Lib-${TALIB_PY_VER}.zip
 unzip talib-python.zip
-if [ $? -ne 0 ]; then exit 1; fi
+rm talib-python.zip
 
-# git apply --verbose --binary talib.diff
-# if [ $? -ne 0 ]; then exit 1; fi
-
+# Build TA-Lib C library
+echo "Building TA-Lib C library..."
 cd ta-lib-${TALIB_C_VER}
-
 mkdir -p include/ta-lib
-cp -r include/* include/ta-lib
+cp -r include/* include/ta-lib/
 
 mkdir _build
 cd _build
 
-cmake ..
-if [ $? -ne 0 ]; then exit 1; fi
-
+cmake -DCMAKE_BUILD_TYPE=Release ..
 make -j$(nproc)
-if [ $? -ne 0 ]; then exit 1; fi
 
-cp -f libta_lib.a libta_lib.so
+# Copy the library to a standard location
+sudo cp ta_lib.* /usr/local/lib/
+sudo cp -r ../include/ta-lib /usr/local/include/
 
 cd ../..
+
+# Build TA-Lib Python binding
+echo "Building TA-Lib Python binding..."
+cd ta-lib-python-TA_Lib-${TALIB_PY_VER}
+
+# Set environment variables for the Python binding
+export TA_LIBRARY_PATH="/usr/local/lib"
+export TA_INCLUDE_PATH="/usr/local/include"
+
+python setup.py build
+python setup.py install
+
+echo "TA-Lib build and installation completed successfully."
